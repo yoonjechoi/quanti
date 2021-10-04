@@ -58,14 +58,26 @@ RUN pip install --no-input tensorflow
 # copy root from rootBuilder
 COPY --from=rootBuilder /usr/local/root /usr/local/root
 
+# install root required packages
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Seoul
+RUN apt-get install -y dpkg-dev cmake g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev python libssl-dev
+
 # setup root kernel in jupyter
 RUN pip install --no-input metakernel
 RUN mkdir -p /root/.local/share/jupyter/kernels && \
     cp -r /usr/local/root/etc/notebook/kernels/root /root/.local/share/jupyter/kernels
 
+
+RUN echo "source /usr/local/root/bin/thisroot.sh" > /etc/profile.d/root.sh
+
 RUN mkdir -p /workspace
 RUN chmod -R 777 /workspace
+    
+#ENTRYPOINT ["jupyter-lab", "--no-browser", "--allow-root", "--ip=0.0.0.0", "--notebook-dir=/workspace"]
 
-ENTRYPOINT ["jupyter-lab", "--no-browser", "--allow-root", "--ip=0.0.0.0", "--notebook-dir=/workspace"]
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
 
